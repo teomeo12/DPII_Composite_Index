@@ -1,6 +1,9 @@
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Load the GDP data
+#-----------------------------------------------------------------------------------------------------------------------
 gdp_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\GDP\\GDP_per_Capita_clean.xlsx',header=0)
 # Print the first few rows to check the column names
 print("GDP Data")
@@ -12,8 +15,11 @@ gdp_2019 = gdp_data[['Country', '2019']].copy()
 # Check the extracted data
 print("GDP 2019")
 print(gdp_2019.head())
+#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 
 # Load the Employment Rate data
+#-----------------------------------------------------------------------------------------------------------------------
 employment_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\EmploymentRates\\employment_rate_citizenship_clean.xlsx')
 print("Employment Data")
 print(employment_data.head())
@@ -22,25 +28,129 @@ employment_2019 = employment_data[['Country', '2019']].copy()
 # Check the extracted data
 print("Employment 2022")
 print(employment_2019.head())
+#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 
-# Merge the GDP and Employment Rate data ,include countries that are present in both datasets.
+#Load the Population data
+#-----------------------------------------------------------------------------------------------------------------------
+population_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\Population\\population_clean.xlsx')
+print("Population Data")
+print(population_data.head())
+# Filter the Population data for the year 2019
+population_2019 = population_data[['Country', '2019']].copy()
+
+# Check the extracted data
+print("\nPopulation 2019")
+print(population_2019.head())
+#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+
+# Load the Education level data
+#-----------------------------------------------------------------------------------------------------------------------
+# Load each dataset
+level_0_2_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\EducationLevel\\level_0_2.xlsx') # for education level 0-2 Less than primary, primary and lower secondary education (levels 0-2)
+level_3_4_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\EducationLevel\\level_3_4.xlsx') # for education level 3-4 Upper secondary and post-secondary non-tertiary education (levels 3-4)
+level_3_8_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\EducationLevel\\level_3_8.xlsx') # for education level 3-8 Upper secondary, post-secondary non-tertiary and tertiary education (levels 3-8)
+
+# Filter each dataset for the year of interest
+column_of_interest = '2019'
+level_0_2_data = level_0_2_data[['Country', column_of_interest]].copy()
+level_3_4_data = level_3_4_data[['Country', column_of_interest]].copy()
+level_3_8_data = level_3_8_data[['Country', column_of_interest]].copy()
+
+print("\nEducation Level 0-2")
+print(level_0_2_data.head())
+
+# Rename the column to 'Percentage' for consistency
+level_0_2_data.rename(columns={column_of_interest: 'Percentage'}, inplace=True)
+level_3_4_data.rename(columns={column_of_interest: 'Percentage'}, inplace=True)
+level_3_8_data.rename(columns={column_of_interest: 'Percentage'}, inplace=True)
+
+# Merge the datasets on the 'Country' column
+education_data = pd.merge(level_0_2_data, level_3_4_data, on='Country', suffixes=('_0_2', '_3_4'))
+education_data = pd.merge(education_data, level_3_8_data, on='Country')
+education_data.rename(columns={'Percentage': 'Percentage_3_8'}, inplace=True)
+
+education_data['Percentage_0_2'] = pd.to_numeric(education_data['Percentage_0_2'], errors='coerce')
+education_data['Percentage_3_4'] = pd.to_numeric(education_data['Percentage_3_4'], errors='coerce')
+education_data['Percentage_3_8'] = pd.to_numeric(education_data['Percentage_3_8'], errors='coerce')
+
+print("\nEducation Data")
+print(education_data.dtypes)
+
+# Define weights for each education level
+weights = {
+    'Percentage_0_2': 0.2,
+    'Percentage_3_4': 0.5,
+    'Percentage_3_8': 0.5
+}
+
+# Calculate the weighted average of the education levels
+education_data['Education_Level'] = (education_data['Percentage_0_2'] * weights['Percentage_0_2'] +
+                                        education_data['Percentage_3_4'] * weights['Percentage_3_4'] +
+                                        education_data['Percentage_3_8'] * weights['Percentage_3_8'])
+
+# Normalize the education index to a scale of 0 to 1
+education_data['Normalized_Education_Level'] = (
+    (education_data['Education_Level'] - education_data['Education_Level'].min()) / 
+    (education_data['Education_Level'].max() - education_data['Education_Level'].min())
+)
+# Check the merged dataset
+print("\nEducation Data")
+print(education_data)
+ 
+#-----------------------------------------------------------------------------------------------------------------------
+# Merge the GDP, Employment, and Population data
 merged_data = pd.merge(gdp_2019, employment_2019, on='Country', how='inner', suffixes=('_GDP', '_Employment'))
+merged_data = pd.merge(merged_data, population_2019, on='Country', how='inner')
+merged_data.columns = ['Country', 'GDP', 'Employment', 'Population']
+# Merge the Education data
+merged_data = pd.merge(merged_data, education_data[['Country', 'Normalized_Education_Level']], on='Country', how='inner')
+
 # Check the merged DataFrame
-print("Merged Data")
-print(merged_data.head())
-
-# Countries in GDP but not in Employment
-countries_not_in_employment = set(gdp_2019['Country']) - set(employment_2019['Country'])
-
-# Countries in Employment but not in GDP
-countries_not_in_gdp = set(employment_2019['Country']) - set(gdp_2019['Country'])
-
-print("Countries in GDP but not in Employment:", countries_not_in_employment)
-print("Countries in Employment but not in GDP:", countries_not_in_gdp)
-
-pd.set_option('display.max_rows', None)
-# Set the option to display all columns if necessary
-pd.set_option('display.max_columns', None)
-
+print("\nMerged Data")
 print(merged_data)
+
+
+# Normalizing GDP, Employment, Population
+merged_data['Normalized_GDP'] = (merged_data['GDP'] - merged_data['GDP'].min()) / (merged_data['GDP'].max() - merged_data['GDP'].min())
+merged_data['Normalized_Employment'] = (merged_data['Employment'] - merged_data['Employment'].min()) / (merged_data['Employment'].max() - merged_data['Employment'].min())
+merged_data['Normalized_Population'] = (merged_data['Population'] - merged_data['Population'].min()) / (merged_data['Population'].max() - merged_data['Population'].min())
+
+# merge Education, GDP, Employment, Population
+merged_data['DPII_Index'] = (merged_data['Normalized_Education_Level'] + merged_data['Normalized_GDP'] + merged_data['Normalized_Employment'] + merged_data['Normalized_Population']) / 4
+
+# Set display options to show all rows and columns
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+
+# Display the final merged data with the composite index
+print("\nFinal Merged Data with Composite Index")
+print(merged_data[['Country', 'Normalized_Education_Level', 'Normalized_GDP', 'Normalized_Employment', 'Normalized_Population', 'DPII_Index']])
+
+# Quick visualization of the Composite Index
+sns.histplot(merged_data['DPII_Index'], kde=True)
+plt.title('Distribution of DPII Index')
+plt.xlabel('Composite Index Score')
+plt.ylabel('Frequency')
+plt.show()
+
+
+# Optional: Check for countries not present in all datasets
+# countries_gdp = set(gdp_2019['Country'])
+# countries_employment = set(employment_2019['Country'])
+# countries_population = set(population_2019['Country'])
+
+# print("Countries in GDP but not in Employment or Population:", countries_gdp - countries_employment - countries_population)
+# print("Countries in Employment but not in GDP or Population:", countries_employment - countries_gdp - countries_population)
+# print("Countries in Population but not in GDP or Employment:", countries_population - countries_gdp - countries_employment)
+
+
+
+# pd.set_option('display.max_rows', None)
+# # Set the option to display all columns if necessary
+# pd.set_option('display.max_columns', None)
+
+# print(merged_data)
 # Calculate the DPII index
