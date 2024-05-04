@@ -48,30 +48,24 @@ print(population_2019.head())
 # Load the Education level data
 #-----------------------------------------------------------------------------------------------------------------------
 # Load each dataset
-level_0_2_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\EducationLevel\\level_0_2.xlsx') # for education level 0-2 Less than primary, primary and lower secondary education (levels 0-2)
 level_3_4_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\EducationLevel\\level_3_4.xlsx') # for education level 3-4 Upper secondary and post-secondary non-tertiary education (levels 3-4)
 level_3_8_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\EducationLevel\\level_3_8.xlsx') # for education level 3-8 Upper secondary, post-secondary non-tertiary and tertiary education (levels 3-8)
 
 # Filter each dataset for the year of interest
 column_of_interest = '2019'
-level_0_2_data = level_0_2_data[['Country', column_of_interest]].copy()
 level_3_4_data = level_3_4_data[['Country', column_of_interest]].copy()
 level_3_8_data = level_3_8_data[['Country', column_of_interest]].copy()
 
-print("\nEducation Level 0-2")
-print(level_0_2_data.head())
+print("\nEducation Level 3-4")
+print(level_3_4_data.head())
 
 # Rename the column to 'Percentage' for consistency
-level_0_2_data.rename(columns={column_of_interest: 'Percentage'}, inplace=True)
 level_3_4_data.rename(columns={column_of_interest: 'Percentage'}, inplace=True)
 level_3_8_data.rename(columns={column_of_interest: 'Percentage'}, inplace=True)
 
 # Merge the datasets on the 'Country' column
-education_data = pd.merge(level_0_2_data, level_3_4_data, on='Country', suffixes=('_0_2', '_3_4'))
-education_data = pd.merge(education_data, level_3_8_data, on='Country')
-education_data.rename(columns={'Percentage': 'Percentage_3_8'}, inplace=True)
+education_data = pd.merge(level_3_4_data, level_3_8_data, on='Country', how='inner', suffixes=('_3_4', '_3_8'))
 
-education_data['Percentage_0_2'] = pd.to_numeric(education_data['Percentage_0_2'], errors='coerce')
 education_data['Percentage_3_4'] = pd.to_numeric(education_data['Percentage_3_4'], errors='coerce')
 education_data['Percentage_3_8'] = pd.to_numeric(education_data['Percentage_3_8'], errors='coerce')
 
@@ -80,15 +74,13 @@ print(education_data.dtypes)
 
 # Define weights for each education level
 weights = {
-    'Percentage_0_2': 0.2,
     'Percentage_3_4': 0.5,
     'Percentage_3_8': 0.5
 }
 
 # Calculate the weighted average of the education levels
-education_data['Education_Level'] = (education_data['Percentage_0_2'] * weights['Percentage_0_2'] +
-                                        education_data['Percentage_3_4'] * weights['Percentage_3_4'] +
-                                        education_data['Percentage_3_8'] * weights['Percentage_3_8'])
+education_data['Education_Level'] = (education_data['Percentage_3_4'] * weights['Percentage_3_4'] +
+                                education_data['Percentage_3_8'] * weights['Percentage_3_8'])
 
 # Normalize the education index to a scale of 0 to 1
 education_data['Normalized_Education_Level'] = (
@@ -98,14 +90,38 @@ education_data['Normalized_Education_Level'] = (
 # Check the merged dataset
 print("\nEducation Data")
 print(education_data)
+
+# Loanding the Foreign population data
+#-----------------------------------------------------------------------------------------------------------------------
+foreign_population_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\ForeignPopulation\\foreign_population.xlsx')
+print("Foreign Population Data")
+print(foreign_population_data.head())
+
+# Filter the Foreign Population data for the year 2019
+foreign_population = foreign_population_data[['Country', 'Foreigners%']].copy()
+
+# Normalize the foreign population index to a scale of 0 to 1
+foreign_population['Normalized_Foreign_Population'] = (foreign_population['Foreigners%'] - foreign_population['Foreigners%'].min()) / (foreign_population['Foreigners%'].max() - foreign_population['Foreigners%'].min())
+
+
+# Check the extracted data
+print("\nForeign Population 2019")
+print(foreign_population.head())
  
 #-----------------------------------------------------------------------------------------------------------------------
 # Merge the GDP, Employment, and Population data
 merged_data = pd.merge(gdp_2019, employment_2019, on='Country', how='inner', suffixes=('_GDP', '_Employment'))
 merged_data = pd.merge(merged_data, population_2019, on='Country', how='inner')
 merged_data.columns = ['Country', 'GDP', 'Employment', 'Population']
+# Merge the Foreign Population data
+merged_data = pd.merge(merged_data, foreign_population[['Country', 'Foreigners%']], on='Country', how='inner')
 # Merge the Education data
 merged_data = pd.merge(merged_data, education_data[['Country', 'Normalized_Education_Level']], on='Country', how='inner')
+
+# Set display options to show all rows and columns
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
 
 # Check the merged DataFrame
 print("\nMerged Data")
