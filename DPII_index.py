@@ -268,11 +268,6 @@ weights = {
 education_data['Education_Level'] = (education_data['Percentage_3_4'] * weights['Percentage_3_4'] +
                                 education_data['Percentage_3_8'] * weights['Percentage_3_8'])
 
-# Normalize the education index to a scale of 0 to 1
-education_data['Normalized_Education_Level'] = (
-    (education_data['Education_Level'] - education_data['Education_Level'].min()) / 
-    (education_data['Education_Level'].max() - education_data['Education_Level'].min())
-)
 # Check the merged dataset
 print("\nEducation Data")
 print(education_data)
@@ -337,9 +332,6 @@ for index, (value, country) in enumerate(zip(foreign_population_sorted['Foreigne
 
 plt.show()
 
-# Normalize the foreign population index to a scale of 0 to 1
-foreign_population['Normalized_Foreign_Population'] = (foreign_population['Foreigners%'] - foreign_population['Foreigners%'].min()) / (foreign_population['Foreigners%'].max() - foreign_population['Foreigners%'].min())
-
 # Loading Health Care data
 #-----------------------------------------------------------------------------------------------------------------------
 health_care_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\HealthCareAccess\\healthcare_expenditure_clean.xlsx')
@@ -385,11 +377,6 @@ for index, (value, country) in enumerate(zip(health_care_sorted['Healthcare_Expe
     plt.text(value, index, f'€{value:,.0f}', va='center')  # Format with commas for thousands and Euro symbol
 
 plt.show()
-
-# Normalize the Health Care index to a scale of 0 to 1
-health_care_2019['Normalized_Health_Care'] = (health_care_2019['Healthcare_Expenditure']
-                                              - health_care_2019['Healthcare_Expenditure'].min()) / (health_care_2019['Healthcare_Expenditure'].max()
-                                            - health_care_2019['Healthcare_Expenditure'].min())
 
 #Loading the Innovation data
 #-----------------------------------------------------------------------------------------------------------------------
@@ -438,12 +425,8 @@ for index, (value, country) in enumerate(zip(innovation_index_sorted['Innovation
 plt.show()
 
 # Convert the 'InnovationIndex' column to numeric
-innovation_index['InnovationIndex'] = pd.to_numeric(innovation_index['InnovationIndex'], errors='coerce')
+#innovation_index['InnovationIndex'] = pd.to_numeric(innovation_index['InnovationIndex'], errors='coerce')
 
-# Normalize the Innovation index to a scale of 0 to 1
-innovation_index['Normalized_Innovation_Index'] = (innovation_index['InnovationIndex'] - innovation_index['InnovationIndex'].min()) / (innovation_index['InnovationIndex'].max() - innovation_index['InnovationIndex'].min())
-
- 
 #-----------------------------------------------------------------------------------------------------------------------
 # Merge the GDP, Employment, Population data, Foreign Population data, Education data and Health care data
 merged_data = pd.merge(gdp_2019, employment_2019, on='Country', how='inner', suffixes=('_GDP', '_Employment'))
@@ -469,22 +452,37 @@ print("\nMerged Data")
 print(merged_data)
 
 
-# Normalizing GDP, Employment, Population
-# merged_data['Normalized_GDP'] = (merged_data['GDP'] - merged_data['GDP'].min()) / (merged_data['GDP'].max() - merged_data['GDP'].min())
-# merged_data['Normalized_Employment'] = (merged_data['Employment'] - merged_data['Employment'].min()) / (merged_data['Employment'].max() - merged_data['Employment'].min())
-# merged_data['Normalized_Population'] = (merged_data['Population'] - merged_data['Population'].min()) / (merged_data['Population'].max() - merged_data['Population'].min())
+# Normalizing GDP, Employment, Population, Foreign Population, Education, Health Care, and Innovation Index
+# Normalize each feature to a scale of 0 to 1
+merged_data['Normalized_GDP'] = (merged_data['GDP'] - merged_data['GDP'].min()) / (merged_data['GDP'].max() - merged_data['GDP'].min())
+merged_data['Normalized_Employment'] = (merged_data['Employment'] - merged_data['Employment'].min()) / (merged_data['Employment'].max() - merged_data['Employment'].min())
+merged_data['Normalized_Population'] = (merged_data['Population'] - merged_data['Population'].min()) / (merged_data['Population'].max() - merged_data['Population'].min())
+merged_data['Normalized_Foreign_Population'] = (merged_data['Foreigners%'] - merged_data['Foreigners%'].min()) / (merged_data['Foreigners%'].max() - merged_data['Foreigners%'].min())
+merged_data['Normalized_Education_Level'] = (merged_data['Education_Level'] - merged_data['Education_Level'].min()) / (merged_data['Education_Level'].max() - merged_data['Education_Level'].min())
+merged_data['Normalized_Healthcare_Expenditure'] = (merged_data['Healthcare_Expenditure'] - merged_data['Healthcare_Expenditure'].min()) / (merged_data['Healthcare_Expenditure'].max() - merged_data['Healthcare_Expenditure'].min())
+merged_data['Normalized_InnovationIndex'] = (merged_data['InnovationIndex'] - merged_data['InnovationIndex'].min()) / (merged_data['InnovationIndex'].max() - merged_data['InnovationIndex'].min())
 
-# # merge Education, GDP, Employment, Population
-# merged_data['DPII_Index'] = (merged_data['Normalized_Education_Level'] + merged_data['Normalized_GDP'] + merged_data['Normalized_Employment'] + merged_data['Normalized_Population']) / 4
+# Reorder columns to match your preferred sequence
+merged_data = merged_data[['Country', 'Normalized_GDP', 'Normalized_Employment', 'Normalized_Population', 
+                           'Normalized_Foreign_Population', 'Normalized_Education_Level', 
+                           'Normalized_Healthcare_Expenditure', 'Normalized_InnovationIndex']]
+# Calculate the DPII Index by averaging normalized scores 
+merged_data['DPII_Index'] = (merged_data['Normalized_Education_Level'] + merged_data['Normalized_GDP'] +
+                             merged_data['Normalized_Employment'] + merged_data['Normalized_Population'] +
+                             merged_data['Normalized_Foreign_Population'] + merged_data['Normalized_Healthcare_Expenditure'] +
+                             merged_data['Normalized_InnovationIndex']) / 7
 
-# # Set display options to show all rows and columns
-# pd.set_option('display.max_rows', None)
-# pd.set_option('display.max_columns', None)
-# pd.set_option('display.width', 1000)
 
-# # Display the final merged data with the composite index
-# print("\nFinal Merged Data with Composite Index")
-# print(merged_data[['Country', 'Normalized_Education_Level', 'Normalized_GDP', 'Normalized_Employment', 'Normalized_Population', 'DPII_Index']])
+# Set display options to show all rows and columns
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+
+# Display the final merged data with the composite index
+print("\nFinal Merged Data with Composite Index")
+print(merged_data[['Country', 'Normalized_GDP', 'Normalized_Employment', 'Normalized_Population', 
+                   'Normalized_Foreign_Population', 'Normalized_Education_Level', 
+                   'Normalized_Healthcare_Expenditure', 'Normalized_InnovationIndex', 'DPII_Index']])
 
 # # Quick visualization of the Composite Index
 # sns.histplot(merged_data['DPII_Index'], kde=True)
