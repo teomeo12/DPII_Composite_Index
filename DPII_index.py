@@ -12,8 +12,12 @@ print(gdp_data.head())
 # Filter the GDP data for the year 2023
 gdp_2019 = gdp_data[['Country', '2019']].copy()
 
+# Check for missing values
+print("\nMissing Values in GDP Data")
+print(gdp_2019.isnull().sum())
+
 # Check the extracted data
-print("GDP 2019")
+print("\nGDP 2019")
 print(gdp_2019.head())
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
@@ -25,6 +29,11 @@ print("Employment Data")
 print(employment_data.head())
 # Filter the Employment Rate data for the year 2023
 employment_2019 = employment_data[['Country', '2019']].copy()
+
+# Check for missing values
+print("\nMissing Values in Employment Data")
+print(employment_2019.isnull().sum())
+
 # Check the extracted data
 print("Employment 2022")
 print(employment_2019.head())
@@ -38,6 +47,10 @@ print("Population Data")
 print(population_data.head())
 # Filter the Population data for the year 2019
 population_2019 = population_data[['Country', '2019']].copy()
+
+# Check for missing values
+print("\nMissing Values in Population Data")
+print(population_2019.isnull().sum())
 
 # Check the extracted data
 print("\nPopulation 2019")
@@ -56,6 +69,12 @@ column_of_interest = '2019'
 level_3_4_data = level_3_4_data[['Country', column_of_interest]].copy()
 level_3_8_data = level_3_8_data[['Country', column_of_interest]].copy()
 
+#Check for missing values
+print("\nMissing Values in Education Level 3-4 Data")
+print(level_3_4_data.isnull().sum())
+print("\nMissing Values in Education Level 3-8 Data")
+print(level_3_8_data.isnull().sum())
+
 print("\nEducation Level 3-4")
 print(level_3_4_data.head())
 
@@ -66,6 +85,7 @@ level_3_8_data.rename(columns={column_of_interest: 'Percentage'}, inplace=True)
 # Merge the datasets on the 'Country' column
 education_data = pd.merge(level_3_4_data, level_3_8_data, on='Country', how='inner', suffixes=('_3_4', '_3_8'))
 
+# Convert the 'Percentage' columns to numeric
 education_data['Percentage_3_4'] = pd.to_numeric(education_data['Percentage_3_4'], errors='coerce')
 education_data['Percentage_3_8'] = pd.to_numeric(education_data['Percentage_3_8'], errors='coerce')
 
@@ -100,6 +120,10 @@ print(foreign_population_data.head())
 # Filter the Foreign Population data for the year 2019
 foreign_population = foreign_population_data[['Country', 'Foreigners%']].copy()
 
+# Check for missing values
+print("\nMissing Values in Foreign Population Data")
+print(foreign_population.isnull().sum())
+
 # Normalize the foreign population index to a scale of 0 to 1
 foreign_population['Normalized_Foreign_Population'] = (foreign_population['Foreigners%'] - foreign_population['Foreigners%'].min()) / (foreign_population['Foreigners%'].max() - foreign_population['Foreigners%'].min())
 
@@ -107,16 +131,67 @@ foreign_population['Normalized_Foreign_Population'] = (foreign_population['Forei
 # Check the extracted data
 print("\nForeign Population 2019")
 print(foreign_population.head())
+
+# Loading Health Care data
+#-----------------------------------------------------------------------------------------------------------------------
+health_care_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\HealthCareAccess\\healthcare_expenditure_clean.xlsx')
+print("\nHealth Care Data")
+print(health_care_data.head())
+
+# Filter the Health Care data for the year 2019
+health_care_2019 = health_care_data[['Country', '2019']].copy()
+health_care_2019.rename(columns={'2019': 'Healthcare_Expenditure'}, inplace=True)
+
+# Check for missing values
+print("\nMissing Values in Health Care Data")
+print(health_care_2019.isnull().sum())
+
+# Normalize the Health Care index to a scale of 0 to 1
+health_care_2019['Normalized_Health_Care'] = (health_care_2019['Healthcare_Expenditure']
+                                              - health_care_2019['Healthcare_Expenditure'].min()) / (health_care_2019['Healthcare_Expenditure'].max()
+                                            - health_care_2019['Healthcare_Expenditure'].min())
+
+# Check the extracted data
+print("\nHealth Care 2019")
+print(health_care_2019.head())
+
+#Loading the Innovation data
+#-----------------------------------------------------------------------------------------------------------------------
+innovation_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\InnovationIndex\\innovation_index.xlsx')
+print("\nInnovation Data")
+print(innovation_data.head())
+
+# Filter the Innovation data for the year 2019
+innovation_index = innovation_data[['Country', 'InnovationIndex']].copy()
+
+# Check for missing values
+print("\nMissing Values in Innovation Data")
+print(innovation_index.isnull().sum())
+
+# Convert the 'InnovationIndex' column to numeric
+innovation_index['InnovationIndex'] = pd.to_numeric(innovation_index['InnovationIndex'], errors='coerce')
+
+# Normalize the Innovation index to a scale of 0 to 1
+innovation_index['Normalized_Innovation_Index'] = (innovation_index['InnovationIndex'] - innovation_index['InnovationIndex'].min()) / (innovation_index['InnovationIndex'].max() - innovation_index['InnovationIndex'].min())
+
+# Check the extracted data
+print("\nInnovation Index 2019")
+print(innovation_index.head())
  
 #-----------------------------------------------------------------------------------------------------------------------
-# Merge the GDP, Employment, and Population data
+# Merge the GDP, Employment, Population data, Foreign Population data, Education data and Health care data
 merged_data = pd.merge(gdp_2019, employment_2019, on='Country', how='inner', suffixes=('_GDP', '_Employment'))
 merged_data = pd.merge(merged_data, population_2019, on='Country', how='inner')
 merged_data.columns = ['Country', 'GDP', 'Employment', 'Population']
 # Merge the Foreign Population data
 merged_data = pd.merge(merged_data, foreign_population[['Country', 'Foreigners%']], on='Country', how='inner')
 # Merge the Education data
-merged_data = pd.merge(merged_data, education_data[['Country', 'Normalized_Education_Level']], on='Country', how='inner')
+merged_data = pd.merge(merged_data, education_data[['Country', 'Education_Level']], on='Country', how='inner')
+# Merge the Health Care data
+merged_data = pd.merge(merged_data, health_care_2019[['Country','Healthcare_Expenditure']], on='Country', how='inner')
+
+# Merge the Innovation data
+merged_data = pd.merge(merged_data, innovation_index[['Country', 'InnovationIndex']], on='Country', how='inner')
 
 # Set display options to show all rows and columns
 pd.set_option('display.max_rows', None)
@@ -129,28 +204,28 @@ print(merged_data)
 
 
 # Normalizing GDP, Employment, Population
-merged_data['Normalized_GDP'] = (merged_data['GDP'] - merged_data['GDP'].min()) / (merged_data['GDP'].max() - merged_data['GDP'].min())
-merged_data['Normalized_Employment'] = (merged_data['Employment'] - merged_data['Employment'].min()) / (merged_data['Employment'].max() - merged_data['Employment'].min())
-merged_data['Normalized_Population'] = (merged_data['Population'] - merged_data['Population'].min()) / (merged_data['Population'].max() - merged_data['Population'].min())
+# merged_data['Normalized_GDP'] = (merged_data['GDP'] - merged_data['GDP'].min()) / (merged_data['GDP'].max() - merged_data['GDP'].min())
+# merged_data['Normalized_Employment'] = (merged_data['Employment'] - merged_data['Employment'].min()) / (merged_data['Employment'].max() - merged_data['Employment'].min())
+# merged_data['Normalized_Population'] = (merged_data['Population'] - merged_data['Population'].min()) / (merged_data['Population'].max() - merged_data['Population'].min())
 
-# merge Education, GDP, Employment, Population
-merged_data['DPII_Index'] = (merged_data['Normalized_Education_Level'] + merged_data['Normalized_GDP'] + merged_data['Normalized_Employment'] + merged_data['Normalized_Population']) / 4
+# # merge Education, GDP, Employment, Population
+# merged_data['DPII_Index'] = (merged_data['Normalized_Education_Level'] + merged_data['Normalized_GDP'] + merged_data['Normalized_Employment'] + merged_data['Normalized_Population']) / 4
 
-# Set display options to show all rows and columns
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
-pd.set_option('display.width', 1000)
+# # Set display options to show all rows and columns
+# pd.set_option('display.max_rows', None)
+# pd.set_option('display.max_columns', None)
+# pd.set_option('display.width', 1000)
 
-# Display the final merged data with the composite index
-print("\nFinal Merged Data with Composite Index")
-print(merged_data[['Country', 'Normalized_Education_Level', 'Normalized_GDP', 'Normalized_Employment', 'Normalized_Population', 'DPII_Index']])
+# # Display the final merged data with the composite index
+# print("\nFinal Merged Data with Composite Index")
+# print(merged_data[['Country', 'Normalized_Education_Level', 'Normalized_GDP', 'Normalized_Employment', 'Normalized_Population', 'DPII_Index']])
 
-# Quick visualization of the Composite Index
-sns.histplot(merged_data['DPII_Index'], kde=True)
-plt.title('Distribution of DPII Index')
-plt.xlabel('Composite Index Score')
-plt.ylabel('Frequency')
-plt.show()
+# # Quick visualization of the Composite Index
+# sns.histplot(merged_data['DPII_Index'], kde=True)
+# plt.title('Distribution of DPII Index')
+# plt.xlabel('Composite Index Score')
+# plt.ylabel('Frequency')
+# plt.show()
 
 
 # Optional: Check for countries not present in all datasets
