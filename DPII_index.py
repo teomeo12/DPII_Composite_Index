@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 # Load the GDP data
 #-----------------------------------------------------------------------------------------------------------------------
-gdp_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\GDP\\GDP_per_Capita_clean.xlsx',header=0)
+gdp_data = pd.read_excel('Data/GDP_per_Capita_clean.xlsx',header=0)
 # Print the first few rows to check the column names
 print("GDP Data")
 print(gdp_data.head())
@@ -64,7 +64,7 @@ plt.show()
 
 # Load the Employment Rate data
 #-----------------------------------------------------------------------------------------------------------------------
-employment_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\EmploymentRates\\employment_rate_citizenship_clean.xlsx')
+employment_data = pd.read_excel('Data/employment_rate_citizenship_clean.xlsx')
 print("\nEmployment Data")
 print(employment_data.head())
 # Filter the Employment Rate data for the year 2023
@@ -117,7 +117,7 @@ plt.show()
 
 #Load the Population data
 #-----------------------------------------------------------------------------------------------------------------------
-population_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\Population\\population_clean.xlsx')
+population_data = pd.read_excel('Data/population_clean.xlsx')
 print("\nPopulation Data")
 print(population_data.head())
 # Filter the Population data for the year 2019
@@ -168,8 +168,8 @@ plt.show()
 # Load the Education level data
 #-----------------------------------------------------------------------------------------------------------------------
 # Load each dataset
-level_3_4_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\EducationLevel\\level_3_4.xlsx') # for education level 3-4 Upper secondary and post-secondary non-tertiary education (levels 3-4)
-level_3_8_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\EducationLevel\\level_3_8.xlsx') # for education level 3-8 Upper secondary, post-secondary non-tertiary and tertiary education (levels 3-8)
+level_3_4_data = pd.read_excel('Data/level_3_4.xlsx') # for education level 3-4 Upper secondary and post-secondary non-tertiary education (levels 3-4)
+level_3_8_data = pd.read_excel('Data/level_3_8.xlsx') # for education level 3-8 Upper secondary, post-secondary non-tertiary and tertiary education (levels 3-8)
 
 # Filter each dataset for the year of interest
 column_of_interest = '2019'
@@ -295,7 +295,7 @@ plt.show()
 
 # Loanding the Foreign population data
 #-----------------------------------------------------------------------------------------------------------------------
-foreign_population_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\ForeignPopulation\\foreign_population.xlsx')
+foreign_population_data = pd.read_excel('Data/foreign_population.xlsx')
 print("Foreign Population Data")
 print(foreign_population_data.head())
 
@@ -340,7 +340,7 @@ plt.show()
 
 # Loading Health Care data
 #-----------------------------------------------------------------------------------------------------------------------
-health_care_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\HealthCareAccess\\healthcare_expenditure_clean.xlsx')
+health_care_data = pd.read_excel('Data/healthcare_expenditure_clean.xlsx')
 print("\nHealth Care Data")
 print(health_care_data.head())
 
@@ -386,7 +386,7 @@ plt.show()
 
 #Loading the Innovation data
 #-----------------------------------------------------------------------------------------------------------------------
-innovation_data = pd.read_excel('C:\\Users\\teomeo\\Desktop\\aYEAR4\\semester 2\\Data Analysis\\DPII\\InnovationIndex\\innovation_index.xlsx')
+innovation_data = pd.read_excel('Data/innovation_index.xlsx')
 print("\nInnovation Data")
 print(innovation_data.head())
 
