@@ -1,6 +1,12 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+import scipy.cluster.hierarchy as sch
+import matplotlib.pyplot as plt
+
 
 # Load the GDP data
 #-----------------------------------------------------------------------------------------------------------------------
@@ -462,16 +468,48 @@ merged_data['Normalized_Education_Level'] = (merged_data['Education_Level'] - me
 merged_data['Normalized_Healthcare_Expenditure'] = (merged_data['Healthcare_Expenditure'] - merged_data['Healthcare_Expenditure'].min()) / (merged_data['Healthcare_Expenditure'].max() - merged_data['Healthcare_Expenditure'].min())
 merged_data['Normalized_InnovationIndex'] = (merged_data['InnovationIndex'] - merged_data['InnovationIndex'].min()) / (merged_data['InnovationIndex'].max() - merged_data['InnovationIndex'].min())
 
-# Reorder columns to match your preferred sequence
+# Reorder columns
 merged_data = merged_data[['Country', 'Normalized_GDP', 'Normalized_Employment', 'Normalized_Population', 
                            'Normalized_Foreign_Population', 'Normalized_Education_Level', 
                            'Normalized_Healthcare_Expenditure', 'Normalized_InnovationIndex']]
-# Calculate the DPII Index by averaging normalized scores 
-merged_data['DPII_Index'] = (merged_data['Normalized_Education_Level'] + merged_data['Normalized_GDP'] +
-                             merged_data['Normalized_Employment'] + merged_data['Normalized_Population'] +
-                             merged_data['Normalized_Foreign_Population'] + merged_data['Normalized_Healthcare_Expenditure'] +
-                             merged_data['Normalized_InnovationIndex']) / 7
 
+# Exclude the 'Country' column and consider only the numeric (normalized) columns for analysis
+normalized_columns = ['Normalized_GDP', 'Normalized_Employment', 'Normalized_Population', 
+                      'Normalized_Foreign_Population', 'Normalized_Education_Level',
+                      'Normalized_Healthcare_Expenditure', 'Normalized_InnovationIndex']
+
+# Compute the correlation matrix for the selected normalized columns
+corr_matrix = merged_data[normalized_columns].corr()
+
+# Plot a heatmap using seaborn
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", center=0)
+plt.title('Heatmap of Normalized Data Correlation Matrix')
+plt.show()
+
+# Display the correlation matrix
+print("\nCorrelation Matrix")
+print(corr_matrix)
+
+# Define weights for each variable
+weights = {
+    'Normalized_GDP': 0.15,
+    'Normalized_Employment': 0.15,
+    'Normalized_Population': 0.10,
+    'Normalized_Foreign_Population': 0.20,
+    'Normalized_Education_Level': 0.20,
+    'Normalized_Healthcare_Expenditure': 0.10,
+    'Normalized_InnovationIndex': 0.10
+}
+
+# Apply weights to the normalized variables and sum them to calculate the DPII Index
+merged_data['DPII_Index'] = (merged_data['Normalized_GDP'] * weights['Normalized_GDP'] +
+                             merged_data['Normalized_Employment'] * weights['Normalized_Employment'] +
+                             merged_data['Normalized_Population'] * weights['Normalized_Population'] +
+                             merged_data['Normalized_Foreign_Population'] * weights['Normalized_Foreign_Population'] +
+                             merged_data['Normalized_Education_Level'] * weights['Normalized_Education_Level'] +
+                             merged_data['Normalized_Healthcare_Expenditure'] * weights['Normalized_Healthcare_Expenditure'] +
+                             merged_data['Normalized_InnovationIndex'] * weights['Normalized_InnovationIndex'])
 
 # Set display options to show all rows and columns
 pd.set_option('display.max_rows', None)
@@ -484,28 +522,59 @@ print(merged_data[['Country', 'Normalized_GDP', 'Normalized_Employment', 'Normal
                    'Normalized_Foreign_Population', 'Normalized_Education_Level', 
                    'Normalized_Healthcare_Expenditure', 'Normalized_InnovationIndex', 'DPII_Index']])
 
-# # Quick visualization of the Composite Index
-# sns.histplot(merged_data['DPII_Index'], kde=True)
-# plt.title('Distribution of DPII Index')
-# plt.xlabel('Composite Index Score')
-# plt.ylabel('Frequency')
-# plt.show()
+# PCA Analysis
+# Standardizing the normalized data again (optional based on distribution of your normalized data)
+scaler = StandardScaler()
+data_scaled = scaler.fit_transform(merged_data.drop(['Country', 'DPII_Index'], axis=1))  # Exclude non-numeric and target columns
 
+# Initialize and fit PCA
+pca = PCA(n_components=2)  # You can adjust n_components based on the explained variance you wish to achieve
+principal_components = pca.fit_transform(data_scaled)
 
-# Optional: Check for countries not present in all datasets
-# countries_gdp = set(gdp_2019['Country'])
-# countries_employment = set(employment_2019['Country'])
-# countries_population = set(population_2019['Country'])
+# Create a DataFrame with the principal components
+pca_df = pd.DataFrame(data=principal_components, columns=['Principal Component 1', 'Principal Component 2'])
+pca_df['Country'] = merged_data['Country']  # Adding country names for reference
 
-# print("Countries in GDP but not in Employment or Population:", countries_gdp - countries_employment - countries_population)
-# print("Countries in Employment but not in GDP or Population:", countries_employment - countries_gdp - countries_population)
-# print("Countries in Population but not in GDP or Employment:", countries_population - countries_gdp - countries_employment)
+# Plotting the PCA results
+plt.figure(figsize=(10, 8))
+plt.scatter(pca_df['Principal Component 1'], pca_df['Principal Component 2'])
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('PCA of DPII Data')
+plt.grid(True)
+plt.show()
 
+# Displaying explained variance
+print("Explained variance by each component:", pca.explained_variance_ratio_)
 
+# Hierarchical Clustering
 
-# pd.set_option('display.max_rows', None)
-# # Set the option to display all columns if necessary
-# pd.set_option('display.max_columns', None)
+# Calculate the linkage matrix
+linkage = sch.linkage(data_scaled, method='ward')
+# Generate the linkage matrix
+linkage = sch.linkage(principal_components, method='average')  # Can also use 'single' or 'complete'
+# Plotting the dendrogram to explore number of clusters
+plt.figure(figsize=(12, 7))
+dendrogram = sch.dendrogram(linkage)
+plt.title('Dendrogram for Hierarchical Clustering')
+plt.xlabel('Sample index or Country')
+plt.ylabel('Euclidean distances')
+plt.show()
 
-# print(merged_data)
-# Calculate the DPII index
+# Clustering using KMeans
+# # Define the number of clusters
+kmeans = KMeans(n_clusters=3, random_state=42)
+clusters = kmeans.fit_predict(principal_components)
+
+# Add cluster results to the PCA DataFrame
+pca_df['Cluster'] = clusters
+
+# Visualize the clustered data
+plt.figure(figsize=(10, 8))
+plt.scatter(pca_df['Principal Component 1'], pca_df['Principal Component 2'], c=pca_df['Cluster'], cmap='viridis')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('K-Means Clustering of PCA-Reduced DPII Data')
+plt.colorbar(label='Cluster')
+plt.grid(True)
+plt.show()
